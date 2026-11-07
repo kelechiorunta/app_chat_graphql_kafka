@@ -2,7 +2,7 @@ import { Kafka } from 'kafkajs';
 
 export const kafka = new Kafka({
   clientId: 'graphql-server',
-  brokers: ['localhost:9090']
+  brokers: [process.env.NODE_ENV==='production'? 'kafka:9092' : 'localhost:9092']
 });
 
 export async function setupKafka() {
