@@ -6,7 +6,8 @@ import {
   GraphQLInt,
   GraphQLBoolean,
   GraphQLNonNull,
-  GraphQLList
+  GraphQLList,
+  GraphQLInputObjectType
 } from 'graphql';
 
 export const ProductType = new GraphQLObjectType({
@@ -38,15 +39,6 @@ export const ChatClient = new GraphQLObjectType({
 	}
 })
 
-export const TypingStatusType = new GraphQLObjectType({
-  name: 'TypingStatus',
-  fields: {
-    senderId: { type: GraphQLString },
-    receiverId: { type: GraphQLString },
-    isTyping: { type: GraphQLBoolean }
-  }
-});
-
 export const SenderType = new GraphQLObjectType({
   name: 'SenderType',
   fields: {
@@ -65,6 +57,45 @@ export const ChatType = new GraphQLObjectType({
 		chat_message: {type: GraphQLString},
 		image_url: {type: GraphQLString},
 		updated_at: {type: GraphQLString},
+	}
+})
+
+export const GroupType = new GraphQLObjectType({
+	name: 'GroupType',
+	fields: {
+		groupId: {type: GraphQLInt},
+		name: {type: GraphQLString},
+		membersIds: {type: new GraphQLList(GraphQLString)},
+		members: {type: new GraphQLList(GraphQLString)},
+	}
+})
+
+export const TypingStatusType = new GraphQLObjectType({
+  name: 'TypingStatus',
+  fields: {
+    senderId: { type: GraphQLString },
+    receiverId: { type: GraphQLString },
+    isTyping: { type: GraphQLBoolean },
+    groupMembers: {type: GraphQLList(GraphQLString)}
+  }
+});
+
+export const GroupMessageType = new GraphQLObjectType({
+	name: 'GroupMessageType',
+	fields: {
+		message: {type: GraphQLString},
+		clientId: {type: GraphQLString},
+		sender: {type: GraphQLString},
+		updatedAt: {type: GraphQLString},
+	}
+})
+
+export const CreateGroupChatType = new GraphQLObjectType({
+	name: 'CreateGroupChatType',
+	fields: {
+		message: {type: GraphQLString},
+		group_chat_id: {type: GraphQLString},
+		client_id: {type: GraphQLString},
 	}
 })
 

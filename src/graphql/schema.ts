@@ -7,7 +7,8 @@ import {
   GraphQLInt,
   GraphQLID,
   GraphQLBoolean,
-  GraphQLInputObjectType
+  GraphQLInputObjectType,
+  GraphQLNonNull
 } from 'graphql';
 import {
   CategoryType,
@@ -15,10 +16,13 @@ import {
   ChatType,
   CreateChatType,
   CreateDetailsType,
+  CreateGroupChatType,
   CreateProductType,
   CursorType,
   CustomerType,
   DeleteTransactionType,
+  GroupMessageType,
+  GroupType,
   InvoiceType,
   PaymentCursorType,
   PendingTransactionType,
@@ -34,7 +38,7 @@ import type { Request } from 'express';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { producer } from '../kafka/producer';
-import { newChatBus } from '../chatbus';
+import ChatBus, { newChatBus } from '../chatbus';
 import path from 'path';
 import { pubClient, subClient } from '../redis/client';
 // import { getRedisClients } from '../redis/redis';
@@ -177,6 +181,78 @@ export const QueryType = new GraphQLObjectType({
       }
     }
   },
+  
+  getUnreadMsgs: {
+		type: new GraphQLList(ChatType),
+		resolve: async(_: any, __:any, {req}) => {
+			try {
+				const response = await axios.get(`http://localhost:5467/chat/unReadMsgs`, {
+					withCredentials: true,
+					headers: {
+						Cookie: req.headers.cookie
+					}
+				});
+				const unReadMsgs = response.data.unReadMsgs;
+        // const allOnline = await pubClient.hkeys(ONLINE_USERS_KEY);
+        // console.log("ONLINEUSERS")
+        console.log("UNreadMsgs", unReadMsgs);
+				// console.table(clients)
+				return unReadMsgs? unReadMsgs : []
+
+			} catch (error) {
+				console.error(error instanceof Error? error.message : error)
+			}
+		}
+	},
+
+  getGroups: {
+		type: new GraphQLList(GroupType),
+		resolve: async(_: any, __:any, {req}) => {
+			try {
+				
+				const response = await axios.get(`http://localhost:5467/chat/groups`, {
+					withCredentials: true,
+					headers: {
+						Cookie: req.headers.cookie
+					}
+				});
+				const groups = response.data.groupedChats;
+        // const allOnline = await pubClient.hkeys(ONLINE_USERS_KEY);
+        // console.log("ONLINEUSERS")
+        console.table(groups);
+				// console.table(clients)
+				return groups? groups : []
+
+			} catch (error) {
+				console.error(error instanceof Error? error.message : error)
+			}
+		}
+	},
+
+  getGroupMessages: {
+		type: new GraphQLList(GroupMessageType),
+    args: {groupId: {type: GraphQLInt}},
+		resolve: async(_: any, { groupId }, {req}) => {
+			try {
+				
+				const response = await axios.get(`http://localhost:5467/chat/groupMessages/${Number(groupId)}`, {
+					withCredentials: true,
+					headers: {
+						Cookie: req.headers.cookie
+					}
+				});
+				const groupMessages = response.data.groupChatMessages;
+        // const allOnline = await pubClient.hkeys(ONLINE_USERS_KEY);
+        // console.log("ONLINEUSERS")
+        console.table(groupMessages);
+				// console.table(clients)
+				return groupMessages? groupMessages : []
+
+			} catch (error) {
+				console.error(error instanceof Error? error.message : error)
+			}
+		}
+	},
 
 	getChatClients: {
 		type: new GraphQLList(ChatClient),
@@ -377,11 +453,12 @@ export const MutationType = new GraphQLObjectType({
       args: {
         senderId: { type: GraphQLString },
         receiverId: { type: GraphQLString },
-        isTyping: { type: GraphQLBoolean }
+        isTyping: { type: GraphQLBoolean },
+        groupMembers: {type: GraphQLList(GraphQLString)}
       },
-      resolve: async (parent, { senderId, receiverId, isTyping }, context) => {
+      resolve: async (parent, { senderId, receiverId, isTyping, groupMembers }, context) => {
         try {
-          const typingIndicator = { senderId: senderId, receiverId: receiverId, isTyping };
+          const typingIndicator = { senderId: senderId, receiverId: receiverId, isTyping, groupMembers };
           // console.log('EMITTING TYPING:', typingIndicator);
 
           // setTimeout(() => {
@@ -451,6 +528,116 @@ export const MutationType = new GraphQLObjectType({
         // //     }
         // //   ]
         // // });
+				return chat? chat : null;
+			}
+			
+		} catch (error) {
+			console.error(error instanceof Error? error.message: error)
+			
+		}
+	  }	
+	},
+
+  clearUnreadChats: {
+	  type: new GraphQLList(ChatType),
+	  args: {
+      senderId: { type: GraphQLString },
+      receiverId: { type: GraphQLString },
+	  },
+	  resolve: async(_: any, { senderId, receiverId}, {req} ) => {
+      try {
+        if (!senderId || ! receiverId) {
+          throw Error('Please provide senderId and receiverIds')
+        }
+        console.table({senderId, receiverId});
+        
+        const response = await axios.post(
+          `http://localhost:5467/chat/clearUnreadMsgs`,
+          {
+            senderId,
+            receiverId
+          },
+          {
+            withCredentials: true, 
+            headers: {
+              Cookie: req.headers.cookie
+            }
+          }
+        );
+        const chats = response.data.clearedChats;
+        console.table(chats)
+        if (chats) {
+				// await producer.send({
+				// 	topic: 'chats',
+				// 	messages: [
+				// 		{
+				// 			value: JSON.stringify({ event: 'NEW_CHAT_MESSAGE', data: chat })
+				// 		}
+				// 	]
+				// });
+        // // await producer.send({
+        // //   topic: 'customers',
+        // //   messages: [
+        // //     {
+        // //       value: JSON.stringify({ event: 'SENDER_ID', data: {senderId: senderId, receiverId: receiverId}})
+        // //     }
+        // //   ]
+        // // });
+				return chats? chats : null;
+			}
+			
+		} catch (error) {
+			console.error(error instanceof Error? error.message: error)
+			
+		}
+	  }	
+	},
+
+  createGroupChat: {
+	  type: CreateGroupChatType,
+	  args: {
+		senderId: { type: GraphQLString },
+		groupId: { type: GraphQLString },
+		groupMessage: { type: GraphQLString }
+	  },
+	  resolve: async(_: any, {senderId, groupId, groupMessage}, {req} ) => {
+		try {
+			if (!senderId || !groupId) {
+				throw Error('Please provide senderId and groupIds')
+			}
+
+			const response = await axios.post(
+				`http://localhost:5467/chat/groupChat`,
+				{
+					senderId,
+					groupId,
+					groupMessage,
+				},
+				{
+					withCredentials: true, 
+					headers: {
+						Cookie: req.headers.cookie
+					}
+				}
+			);
+			const chat = response.data.newGroupMessage;
+			if (chat) {
+				await producer.send({
+					topic: 'chats',
+					messages: [
+						{
+							value: JSON.stringify({ event: 'NEW_GROUP_CHAT_MESSAGE', data: chat })
+						}
+					]
+				});
+        // await producer.send({
+        //   topic: 'customers',
+        //   messages: [
+        //     {
+        //       value: JSON.stringify({ event: 'SENDER_ID', data: {senderId: senderId, receiverId: receiverId}})
+        //     }
+        //   ]
+        // });
 				return chat? chat : null;
 			}
 			
@@ -920,7 +1107,7 @@ export const SubscriptionType = new GraphQLObjectType({
       subscribe: async function* (parent, args, context) {
         const typingAsyncIterator = newChatBus.asyncIterator('TYPING');
         for await (const typingIndicator of typingAsyncIterator) {
-          // console.log('SUBSCRIBE TYPING:', typingIndicator);
+          console.log('SUBSCRIBE TYPING:', typingIndicator);
           // console.log('TYPING INDICATION', typingIndicator);
           yield {
             sendTypingNotifications: typingIndicator
@@ -946,6 +1133,24 @@ export const SubscriptionType = new GraphQLObjectType({
       },
 
       resolve: (payload) => payload.newChatMessageSubscription
+    },
+
+    newGroupChatMessageSubscription: {
+      type: CreateGroupChatType,
+
+      subscribe: async function* (parent, args, content) {
+        console.log('GraphQL client subscribed');
+        const chatMessageAsyncIterator = newChatBus.asyncIterator('NEW_GROUP_CHAT_MESSAGE');
+        for await (const chat of chatMessageAsyncIterator) {
+          console.log('NEWCHAT', chat);
+          console.table(chat)
+          yield {
+            newGroupChatMessageSubscription: chat
+          };
+        }
+      },
+
+      resolve: (payload) => payload.newGroupChatMessageSubscription
     },
 
     loggedInUser: {
@@ -1107,6 +1312,7 @@ const schema = new GraphQLSchema({
 	  ChatType,
     CreateDetailsType,
 	  CreateChatType,
+	  CreateGroupChatType,
     UserDetailsType,
     CursorType,
     PaymentCursorType,
@@ -1114,7 +1320,9 @@ const schema = new GraphQLSchema({
     PendingTransactionType,
     TransactionTaskType,
     TypingStatusType,
-    SenderType
+    SenderType,
+    GroupType,
+    GroupMessageType
   ]
 });
 
