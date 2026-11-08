@@ -6,6 +6,15 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: appchat_graphql_server
+    # develop:
+    #   watch:
+    #     - action: sync
+    #       path: ./src
+    #       target: /src/app
+    #       ignore: 
+    #         - node_modules
+    #     - action: rebuild
+    #       path: ./package*.json
     env_file:
       - .env
     environment:
