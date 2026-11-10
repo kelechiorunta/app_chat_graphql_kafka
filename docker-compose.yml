@@ -31,7 +31,7 @@ services:
     image: apache/kafka-native:4.3.1
     container_name: appchat_kafka
     expose:
-      - 9090
+      - 9092
     ports:
       - '9092:9092'
     env_file:
@@ -60,7 +60,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "bash -c '</dev/tcp/127.0.0.1/9092' || exit 1"
+          "bash -c '</dev/tcp/graphql/9092' || exit 1"
         ]
       interval: 10s
       timeout: 5s
