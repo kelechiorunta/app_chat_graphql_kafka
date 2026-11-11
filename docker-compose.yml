@@ -23,9 +23,9 @@ services:
     restart: unless-stopped
     expose:
       - 5500
-    # depends_on:
-    #   kafka:
-    #     condition: service_healthy
+#     depends_on:
+#       kafka:
+#         condition: service_healthy
    
 #   kafka:
 #     image: apache/kafka-native:4.3.1
@@ -60,7 +60,7 @@ services:
 #       test:
 #         [
 #           "CMD-SHELL",
-#           "bash -c '</dev/tcp/graphql/9092' || exit 1"
+#           "bash -c '</dev/tcp/127.0.0.1/9092' || exit 1"
 #         ]
 #       interval: 10s
 #       timeout: 5s
