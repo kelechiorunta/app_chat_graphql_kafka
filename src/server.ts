@@ -57,7 +57,7 @@ wsServer.on('connection', () => {
 });
 // // ✅ Initialize Redis once
 
-server.listen(PORT, () => console.log(`Server is listening at PORT ${PORT}`))
+server.listen(PORT, '0.0.0.0', () => console.log(`Server is listening at PORT ${PORT}`))
 
 export default server;
 
