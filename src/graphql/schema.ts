@@ -107,7 +107,7 @@ export const QueryType = new GraphQLObjectType({
           if (!id) {
             throw Error('Please provide valid client id')
           }
-          const response = await axios.get(`http://localhost:8080/api/auth/login/user/${id}`, {
+          const response = await axios.get(`http://backend:5467/auth/login/user/${id}`, {
             withCredentials: true, 
             headers: {
               Cookie: req.headers.cookie
@@ -149,7 +149,7 @@ export const QueryType = new GraphQLObjectType({
           throw Error('Please provide valid client id')
         }
         console.log('LOggedOutUserID', id)
-        const response = await axios.get(`http://localhost:8080/api/auth/logout/user/${id}`, {
+        const response = await axios.get(`http://backend:5467/auth/logout/user/${id}`, {
           withCredentials: true, 
           headers: {
             Cookie: req.headers.cookie
@@ -186,7 +186,7 @@ export const QueryType = new GraphQLObjectType({
 		type: new GraphQLList(ChatType),
 		resolve: async(_: any, __:any, {req}) => {
 			try {
-				const response = await axios.get(`http://localhost:8080/api/chat/unReadMsgs`, {
+				const response = await axios.get(`http://backend:5467/chat/unReadMsgs`, {
 					withCredentials: true,
 					headers: {
 						Cookie: req.headers.cookie
@@ -210,7 +210,7 @@ export const QueryType = new GraphQLObjectType({
 		resolve: async(_: any, __:any, {req}) => {
 			try {
 				
-				const response = await axios.get(`http://localhost:8080/api/chat/groups`, {
+				const response = await axios.get(`http://backend:5467/chat/groups`, {
 					withCredentials: true,
 					headers: {
 						Cookie: req.headers.cookie
@@ -235,7 +235,7 @@ export const QueryType = new GraphQLObjectType({
 		resolve: async(_: any, { groupId }, {req}) => {
 			try {
 				
-				const response = await axios.get(`http://localhost:8080/api/chat/groupMessages/${Number(groupId)}`, {
+				const response = await axios.get(`http://backend:5467/chat/groupMessages/${Number(groupId)}`, {
 					withCredentials: true,
 					headers: {
 						Cookie: req.headers.cookie
@@ -263,7 +263,7 @@ export const QueryType = new GraphQLObjectType({
 					throw new Error("Please provide id credential")
 				}
 				console.log("ID", id);
-				const response = await axios.get(`http://localhost:8080/api/auth/clients/${id}`, {
+				const response = await axios.get(`http://backend:5467/auth/clients/${id}`, {
 					withCredentials: true,
 					headers: {
 						Cookie: req.headers.cookie
@@ -294,7 +294,7 @@ export const QueryType = new GraphQLObjectType({
 					throw new Error("Please provide id credential")
 				}
 				
-				const response = await axios.get(`http://localhost:8080/api/chat/${senderId}/${receiverId}`, {
+				const response = await axios.get(`http://backend:5467/chat/${senderId}/${receiverId}`, {
 					withCredentials: true,
 					headers: {
 						Cookie: req.headers.cookie
