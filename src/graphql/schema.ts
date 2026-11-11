@@ -263,7 +263,7 @@ export const QueryType = new GraphQLObjectType({
 					throw new Error("Please provide id credential")
 				}
 				console.log("ID", id);
-				const response = await axios.get(`http://backend:5467/auth/clients/${id}`, {
+				const response = await axios.get(`http://appchat_backend_server:5467/auth/clients/${id}`, {
 					withCredentials: true,
 					headers: {
 						Cookie: req.headers.cookie
