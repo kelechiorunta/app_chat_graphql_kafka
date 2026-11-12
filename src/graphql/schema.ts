@@ -497,7 +497,7 @@ export const MutationType = new GraphQLObjectType({
       console.table({chatId, status});
 
 			const response = await axios.put(
-				`http://localhost:5467/chat`,
+				`http://backend:5467/chat`,
 				{
 					chatId,
           status
@@ -552,7 +552,7 @@ export const MutationType = new GraphQLObjectType({
         console.table({senderId, receiverId});
         
         const response = await axios.post(
-          `http://localhost:5467/chat/clearUnreadMsgs`,
+          `http://backend:5467/chat/clearUnreadMsgs`,
           {
             senderId,
             receiverId
@@ -607,7 +607,7 @@ export const MutationType = new GraphQLObjectType({
 			}
 
 			const response = await axios.post(
-				`http://localhost:5467/chat/groupChat`,
+				`http://backend:5467/chat/groupChat`,
 				{
 					senderId,
 					groupId,
@@ -667,7 +667,7 @@ export const MutationType = new GraphQLObjectType({
       console.table({senderId, receiverId});
 
 			const response = await axios.post(
-				`http://localhost:5467/chat`,
+				`http://backend:5467/chat`,
 				{
 					senderId,
 					receiverId,
