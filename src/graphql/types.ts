@@ -56,6 +56,7 @@ export const ChatType = new GraphQLObjectType({
 		isRead: {type: GraphQLBoolean},
 		chat_message: {type: GraphQLString},
 		image_url: {type: GraphQLString},
+		video_url: {type: GraphQLString},
 		updated_at: {type: GraphQLString},
 	}
 })
