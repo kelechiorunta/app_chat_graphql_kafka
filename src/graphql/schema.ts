@@ -48,7 +48,7 @@ import { pubClient, subClient } from '../redis/client';
  *
  */
 dotenv.config({
-	path: path.resolve(__dirname, '../../.env')
+  path: path.resolve(__dirname, '../../.env')
 });
 // redisClient.connect().catch((err) => console.log(err instanceof Error ? err.message : err));
 
@@ -102,13 +102,13 @@ export const QueryType = new GraphQLObjectType({
       args: {
         id: { type: GraphQLString }
       },
-      resolve: async (_: any, {id}, { req }: { req: Request }) => {
+      resolve: async (_: any, { id }, { req }: { req: Request }) => {
         try {
           if (!id) {
             throw Error('Please provide valid client id')
           }
           const response = await axios.get(`http://backend:5467/auth/login/user/${id}`, {
-            withCredentials: true, 
+            withCredentials: true,
             headers: {
               Cookie: req.headers.cookie
             }
@@ -138,309 +138,309 @@ export const QueryType = new GraphQLObjectType({
       }
     },
 
-  logoutUser: {
-    type: CustomerType,
-    args: {
-      id: { type: GraphQLString }
-    },
-    resolve: async (_: any, {id}, { req }: { req: Request }) => {
-      try {
-        if (!id) {
-          throw Error('Please provide valid client id')
-        }
-        console.log('LOggedOutUserID', id)
-        const response = await axios.get(`http://backend:5467/auth/logout/user/${id}`, {
-          withCredentials: true, 
-          headers: {
-            Cookie: req.headers.cookie
+    logoutUser: {
+      type: CustomerType,
+      args: {
+        id: { type: GraphQLString }
+      },
+      resolve: async (_: any, { id }, { req }: { req: Request }) => {
+        try {
+          if (!id) {
+            throw Error('Please provide valid client id')
           }
-        });
-        console.table(req.headers.cookie)
-        const user = response.data.user;//response.data;
-        const loggedOutUser = user;
-        console.log("User", loggedOutUser)
-        // const getUser = await pubClient.hget(ONLINE_USERS_KEY,'695e22dd9cbcafd1fa51dfdd');
-        // console.log('GETUSER', getUser)
-        // console.info(getUser)
-        // console.table(JSON.parse(getUser as any))
-        // await pubsub.publish('AUTHUSER', { loggedInUser:authenticatedUser });
-        if (loggedOutUser) {
-          await pubClient.del(ONLINE_USERS_KEY, `${user.client_id}`, JSON.stringify(user))
-          await producer.send({
-            topic: 'customers',
-            messages: [
-              {
-                value: JSON.stringify({ event: 'NEW_CUSTOMER', data:loggedOutUser })
-              }
-            ]
+          console.log('LOggedOutUserID', id)
+          const response = await axios.get(`http://backend:5467/auth/logout/user/${id}`, {
+            withCredentials: true,
+            headers: {
+              Cookie: req.headers.cookie
+            }
           });
+          console.table(req.headers.cookie)
+          const user = response.data.user;//response.data;
+          const loggedOutUser = user;
+          console.log("User", loggedOutUser)
+          // const getUser = await pubClient.hget(ONLINE_USERS_KEY,'695e22dd9cbcafd1fa51dfdd');
+          // console.log('GETUSER', getUser)
+          // console.info(getUser)
+          // console.table(JSON.parse(getUser as any))
+          // await pubsub.publish('AUTHUSER', { loggedInUser:authenticatedUser });
+          if (loggedOutUser) {
+            await pubClient.del(ONLINE_USERS_KEY, `${user.client_id}`, JSON.stringify(user))
+            await producer.send({
+              topic: 'customers',
+              messages: [
+                {
+                  value: JSON.stringify({ event: 'NEW_CUSTOMER', data: loggedOutUser })
+                }
+              ]
+            });
+          }
+          return loggedOutUser ? loggedOutUser : null;
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error);
         }
-        return loggedOutUser ? loggedOutUser : null;
-      } catch (error) {
-        console.error(error instanceof Error ? error.message : error);
       }
-    }
-  },
-  
-  getUnreadMsgs: {
-		type: new GraphQLList(ChatType),
-		resolve: async(_: any, __:any, {req}) => {
-			try {
-				const response = await axios.get(`http://backend:5467/chat/unReadMsgs`, {
-					withCredentials: true,
-					headers: {
-						Cookie: req.headers.cookie
-					}
-				});
-				const unReadMsgs = response.data.unReadMsgs;
-        // const allOnline = await pubClient.hkeys(ONLINE_USERS_KEY);
-        // console.log("ONLINEUSERS")
-        console.log("UNreadMsgs", unReadMsgs);
-				// console.table(clients)
-				return unReadMsgs? unReadMsgs : []
-
-			} catch (error) {
-				console.error(error instanceof Error? error.message : error)
-			}
-		}
-	},
-
-  getGroups: {
-		type: new GraphQLList(GroupType),
-		resolve: async(_: any, __:any, {req}) => {
-			try {
-				
-				const response = await axios.get(`http://backend:5467/chat/groups`, {
-					withCredentials: true,
-					headers: {
-						Cookie: req.headers.cookie
-					}
-				});
-				const groups = response.data.groupedChats;
-        // const allOnline = await pubClient.hkeys(ONLINE_USERS_KEY);
-        // console.log("ONLINEUSERS")
-        console.table(groups);
-				// console.table(clients)
-				return groups? groups : []
-
-			} catch (error) {
-				console.error(error instanceof Error? error.message : error)
-			}
-		}
-	},
-
-  getGroupMessages: {
-		type: new GraphQLList(GroupMessageType),
-    args: {groupId: {type: GraphQLInt}},
-		resolve: async(_: any, { groupId }, {req}) => {
-			try {
-				
-				const response = await axios.get(`http://backend:5467/chat/groupMessages/${Number(groupId)}`, {
-					withCredentials: true,
-					headers: {
-						Cookie: req.headers.cookie
-					}
-				});
-				const groupMessages = response.data.groupChatMessages;
-        // const allOnline = await pubClient.hkeys(ONLINE_USERS_KEY);
-        // console.log("ONLINEUSERS")
-        console.table(groupMessages);
-				// console.table(clients)
-				return groupMessages? groupMessages : []
-
-			} catch (error) {
-				console.error(error instanceof Error? error.message : error)
-			}
-		}
-	},
-
-	getChatClients: {
-		type: new GraphQLList(ChatClient),
-		args: {id: {type: GraphQLString}},
-		resolve: async(_: any, { id }, {req}) => {
-			try {
-				if (!id) {
-					throw new Error("Please provide id credential")
-				}
-				console.log("ID", id);
-				const response = await axios.get(`http://backend:5467/auth/clients/${id}`, {
-					withCredentials: true,
-					headers: {
-						Cookie: req.headers.cookie
-					}
-				});
-				const clients = response.data.clients;
-        const allOnline = await pubClient.hkeys(ONLINE_USERS_KEY);
-        console.log("ONLINEUSERS")
-        console.table(allOnline);
-				// console.table(clients)
-				return clients? clients : []
-
-			} catch (error) {
-				console.error(error instanceof Error? error.message : error)
-			}
-		}
-	},
-
-	getChats: {
-		type: new GraphQLList(ChatType),
-		args: {
-			senderId: {type: GraphQLString},
-			receiverId: {type: GraphQLString},
-		},
-		resolve: async(_: any, { senderId, receiverId }, {req}) => {
-			try {
-				if (!senderId || !receiverId) {
-					throw new Error("Please provide id credential")
-				}
-				
-				const response = await axios.get(`http://backend:5467/chat/${senderId}/${receiverId}`, {
-					withCredentials: true,
-					headers: {
-						Cookie: req.headers.cookie
-					}
-				});
-				const chats = response.data.chats;
-        if (chats) {
-          // await producer.send({
-          //   topic: 'customers',
-          //   messages: [
-          //     {
-          //       value: JSON.stringify({ event: 'SENDER_ID', data: senderId})
-          //     }
-          //   ]
-          // });
-        }
-				return chats? chats : []
-
-			} catch (error) {
-				console.error(error instanceof Error? error.message : error)
-			}
-		}
-	},
-
-  getProducts: {
-    type: new GraphQLList(ProductType),
-    resolve: async (_: any, __: any) => {
-      try {
-        const products = await axios.get('http://localhost:3980/apiproducts');
-        return products ? products.data : [];
-      } catch (error) {
-        console.error(error instanceof Error ? error.message : error);
-      }
-    }
-  },
-
-  getCategories: {
-    type: new GraphQLList(CategoryType),
-    resolve: async (_: any, __: any) => {
-      try {
-        const categories = await axios.get('http://localhost:3980/api/categories');
-        return categories ? categories.data : [];
-      } catch (error) {
-        console.error(error instanceof Error ? error.message : error);
-      }
-    }
-  },
-  getProducers: {
-    type: new GraphQLList(ProducerType),
-    resolve: async (_: any, __: any) => {
-      try {
-        const producers = await axios.get('http://localhost:3980/api/producers');
-        return producers ? producers.data : [];
-      } catch (error) {
-        console.error(error instanceof Error ? error.message : error);
-      }
-    }
-  },
-  getDetails: {
-    type: CursorType,
-    args: {
-      id: { type: GraphQLInt },
-      cursor: { type: GraphQLInt },
-      limit: { type: GraphQLInt },
-      direction: { type: GraphQLString },
-      offset: { type: GraphQLInt }
     },
-    resolve: async (_, { id, cursor, limit, direction, offset }, { req }: {req: Request }) => {
-      try {
-        if (!id) {
-          throw Error("Please provide the customer's id.");
-        }
-        const details = await axios.get(
-          `http://localhost:3980/api/customers/details/${Number(id)}cursor=${cursor}&limit=${Number(limit)}&direction=${direction}offset=${Number(offset)}`,
-          {
+
+    getUnreadMsgs: {
+      type: new GraphQLList(ChatType),
+      resolve: async (_: any, __: any, { req }) => {
+        try {
+          const response = await axios.get(`http://backend:5467/chat/unReadMsgs`, {
             withCredentials: true,
             headers: {
               Cookie: req.headers.cookie
             }
-          }
-        );
-        // console.table(details.data);
-        return details ? details.data : [];
-      } catch (error) {
-        console.error(error instanceof Error ? error.message : error);
-      }
-    }
-  },
-  getInvoices: {
-    type: PaymentCursorType,
-    args: {
-      id: { type: GraphQLInt },
-      cursor: { type: GraphQLInt },
-      limit: { type: GraphQLInt },
-      direction: { type: GraphQLString },
-      offset: { type: GraphQLInt }
-    },
-    resolve: async (_, { id, cursor, limit, direction, offset }, { req }: {req: Request }) => {
-      try {
-        if (!id) {
-          throw Error("Please provide the customer's id.");
+          });
+          const unReadMsgs = response.data.unReadMsgs;
+          // const allOnline = await pubClient.hkeys(ONLINE_USERS_KEY);
+          // console.log("ONLINEUSERS")
+          console.log("UNreadMsgs", unReadMsgs);
+          // console.table(clients)
+          return unReadMsgs ? unReadMsgs : []
+
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error)
         }
-        const details = await axios.get(
-          `http://localhost:3980/api/paystack/invoices/${Number(id)}cursor=${cursor}&limit=${Number(limit)}&direction=${direction}offset=${Number(offset)}`,
-          {
+      }
+    },
+
+    getGroups: {
+      type: new GraphQLList(GroupType),
+      resolve: async (_: any, __: any, { req }) => {
+        try {
+
+          const response = await axios.get(`http://backend:5467/chat/groups`, {
             withCredentials: true,
             headers: {
               Cookie: req.headers.cookie
             }
-          }
-        );
-        // console.table(details.data);
-        return details ? details.data : [];
-      } catch (error) {
-        console.error(error instanceof Error ? error.message : error);
-      }
-    }
-  },
-  getUserTransactionTasks: {
-    type: new GraphQLList(TransactionTaskType),
-    args: {
-      id: { type: GraphQLInt },
-      pending: { type: GraphQLBoolean }
-    },
-    resolve: async (_, { id, pending = false }, { req }: { req: Request })=> {
-      try {
-        if (!id) {
-          throw Error("Please provide the customer's id.");
+          });
+          const groups = response.data.groupedChats;
+          // const allOnline = await pubClient.hkeys(ONLINE_USERS_KEY);
+          // console.log("ONLINEUSERS")
+          console.table(groups);
+          // console.table(clients)
+          return groups ? groups : []
+
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error)
         }
-        const tasks = await axios.get(
-          `http://localhost:3980/api/scheduler/${Number(id)}?pending={pending}`,
-          {
+      }
+    },
+
+    getGroupMessages: {
+      type: new GraphQLList(GroupMessageType),
+      args: { groupId: { type: GraphQLInt } },
+      resolve: async (_: any, { groupId }, { req }) => {
+        try {
+
+          const response = await axios.get(`http://backend:5467/chat/groupMessages/${Number(groupId)}`, {
             withCredentials: true,
             headers: {
               Cookie: req.headers.cookie
             }
+          });
+          const groupMessages = response.data.groupChatMessages;
+          // const allOnline = await pubClient.hkeys(ONLINE_USERS_KEY);
+          // console.log("ONLINEUSERS")
+          console.table(groupMessages);
+          // console.table(clients)
+          return groupMessages ? groupMessages : []
+
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error)
+        }
+      }
+    },
+
+    getChatClients: {
+      type: new GraphQLList(ChatClient),
+      args: { id: { type: GraphQLString } },
+      resolve: async (_: any, { id }, { req }) => {
+        try {
+          if (!id) {
+            throw new Error("Please provide id credential")
           }
-        );
-        // console.table(details.data);
-        return tasks ? tasks.data.allTasks : [];
-      } catch (error) {
-        console.error(error instanceof Error ? error.message : error);
+          console.log("ID", id);
+          const response = await axios.get(`http://backend:5467/auth/clients/${id}`, {
+            withCredentials: true,
+            headers: {
+              Cookie: req.headers.cookie
+            }
+          });
+          const clients = response.data.clients;
+          const allOnline = await pubClient.hkeys(ONLINE_USERS_KEY);
+          console.log("ONLINEUSERS")
+          console.table(allOnline);
+          // console.table(clients)
+          return clients ? clients : []
+
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error)
+        }
+      }
+    },
+
+    getChats: {
+      type: new GraphQLList(ChatType),
+      args: {
+        senderId: { type: GraphQLString },
+        receiverId: { type: GraphQLString },
+      },
+      resolve: async (_: any, { senderId, receiverId }, { req }) => {
+        try {
+          if (!senderId || !receiverId) {
+            throw new Error("Please provide id credential")
+          }
+
+          const response = await axios.get(`http://backend:5467/chat/${senderId}/${receiverId}`, {
+            withCredentials: true,
+            headers: {
+              Cookie: req.headers.cookie
+            }
+          });
+          const chats = response.data.chats;
+          if (chats) {
+            // await producer.send({
+            //   topic: 'customers',
+            //   messages: [
+            //     {
+            //       value: JSON.stringify({ event: 'SENDER_ID', data: senderId})
+            //     }
+            //   ]
+            // });
+          }
+          return chats ? chats : []
+
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error)
+        }
+      }
+    },
+
+    getProducts: {
+      type: new GraphQLList(ProductType),
+      resolve: async (_: any, __: any) => {
+        try {
+          const products = await axios.get('http://localhost:3980/apiproducts');
+          return products ? products.data : [];
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error);
+        }
+      }
+    },
+
+    getCategories: {
+      type: new GraphQLList(CategoryType),
+      resolve: async (_: any, __: any) => {
+        try {
+          const categories = await axios.get('http://localhost:3980/api/categories');
+          return categories ? categories.data : [];
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error);
+        }
+      }
+    },
+    getProducers: {
+      type: new GraphQLList(ProducerType),
+      resolve: async (_: any, __: any) => {
+        try {
+          const producers = await axios.get('http://localhost:3980/api/producers');
+          return producers ? producers.data : [];
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error);
+        }
+      }
+    },
+    getDetails: {
+      type: CursorType,
+      args: {
+        id: { type: GraphQLInt },
+        cursor: { type: GraphQLInt },
+        limit: { type: GraphQLInt },
+        direction: { type: GraphQLString },
+        offset: { type: GraphQLInt }
+      },
+      resolve: async (_, { id, cursor, limit, direction, offset }, { req }: { req: Request }) => {
+        try {
+          if (!id) {
+            throw Error("Please provide the customer's id.");
+          }
+          const details = await axios.get(
+            `http://localhost:3980/api/customers/details/${Number(id)}cursor=${cursor}&limit=${Number(limit)}&direction=${direction}offset=${Number(offset)}`,
+            {
+              withCredentials: true,
+              headers: {
+                Cookie: req.headers.cookie
+              }
+            }
+          );
+          // console.table(details.data);
+          return details ? details.data : [];
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error);
+        }
+      }
+    },
+    getInvoices: {
+      type: PaymentCursorType,
+      args: {
+        id: { type: GraphQLInt },
+        cursor: { type: GraphQLInt },
+        limit: { type: GraphQLInt },
+        direction: { type: GraphQLString },
+        offset: { type: GraphQLInt }
+      },
+      resolve: async (_, { id, cursor, limit, direction, offset }, { req }: { req: Request }) => {
+        try {
+          if (!id) {
+            throw Error("Please provide the customer's id.");
+          }
+          const details = await axios.get(
+            `http://localhost:3980/api/paystack/invoices/${Number(id)}cursor=${cursor}&limit=${Number(limit)}&direction=${direction}offset=${Number(offset)}`,
+            {
+              withCredentials: true,
+              headers: {
+                Cookie: req.headers.cookie
+              }
+            }
+          );
+          // console.table(details.data);
+          return details ? details.data : [];
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error);
+        }
+      }
+    },
+    getUserTransactionTasks: {
+      type: new GraphQLList(TransactionTaskType),
+      args: {
+        id: { type: GraphQLInt },
+        pending: { type: GraphQLBoolean }
+      },
+      resolve: async (_, { id, pending = false }, { req }: { req: Request }) => {
+        try {
+          if (!id) {
+            throw Error("Please provide the customer's id.");
+          }
+          const tasks = await axios.get(
+            `http://localhost:3980/api/scheduler/${Number(id)}?pending={pending}`,
+            {
+              withCredentials: true,
+              headers: {
+                Cookie: req.headers.cookie
+              }
+            }
+          );
+          // console.table(details.data);
+          return tasks ? tasks.data.allTasks : [];
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error);
+        }
       }
     }
   }
-}
 });
 
 // Mutation
@@ -454,7 +454,7 @@ export const MutationType = new GraphQLObjectType({
         senderId: { type: GraphQLString },
         receiverId: { type: GraphQLString },
         isTyping: { type: GraphQLBoolean },
-        groupMembers: {type: GraphQLList(GraphQLString)}
+        groupMembers: { type: GraphQLList(GraphQLString) }
       },
       resolve: async (parent, { senderId, receiverId, isTyping, groupMembers }, context) => {
         try {
@@ -481,234 +481,236 @@ export const MutationType = new GraphQLObjectType({
       }
     },
 
-  updateChatIsReadStatus: {
-	  type: ChatType,
-	  args: {
-		chatId: { type: GraphQLString },
-		status: { type: GraphQLBoolean },
-	  },
-	  resolve: async(_: any, { chatId, status}, {req} ) => {
-		try {
-			if (!chatId) {
-				throw Error('Please provide senderId and receiverIds')
-			}
-
-      // console.log("isRead", isRead);
-      console.table({chatId, status});
-
-			const response = await axios.put(
-				`http://backend:5467/chat`,
-				{
-					chatId,
-          status
-				},
-				{
-					withCredentials: true, 
-					headers: {
-						Cookie: req.headers.cookie
-					}
-				}
-			);
-			const chat = response.data.updatedChat;
-      console.table(chat)
-			if (chat) {
-				// await producer.send({
-				// 	topic: 'chats',
-				// 	messages: [
-				// 		{
-				// 			value: JSON.stringify({ event: 'NEW_CHAT_MESSAGE', data: chat })
-				// 		}
-				// 	]
-				// });
-        // // await producer.send({
-        // //   topic: 'customers',
-        // //   messages: [
-        // //     {
-        // //       value: JSON.stringify({ event: 'SENDER_ID', data: {senderId: senderId, receiverId: receiverId}})
-        // //     }
-        // //   ]
-        // // });
-				return chat? chat : null;
-			}
-			
-		} catch (error) {
-			console.error(error instanceof Error? error.message: error)
-			
-		}
-	  }	
-	},
-
-  clearUnreadChats: {
-	  type: new GraphQLList(ChatType),
-	  args: {
-      senderId: { type: GraphQLString },
-      receiverId: { type: GraphQLString },
-	  },
-	  resolve: async(_: any, { senderId, receiverId}, {req} ) => {
-      try {
-        if (!senderId || ! receiverId) {
-          throw Error('Please provide senderId and receiverIds')
-        }
-        console.table({senderId, receiverId});
-        
-        const response = await axios.post(
-          `http://backend:5467/chat/clearUnreadMsgs`,
-          {
-            senderId,
-            receiverId
-          },
-          {
-            withCredentials: true, 
-            headers: {
-              Cookie: req.headers.cookie
-            }
+    updateChatIsReadStatus: {
+      type: ChatType,
+      args: {
+        chatId: { type: GraphQLString },
+        status: { type: GraphQLBoolean },
+      },
+      resolve: async (_: any, { chatId, status }, { req }) => {
+        try {
+          if (!chatId) {
+            throw Error('Please provide senderId and receiverIds')
           }
-        );
-        const chats = response.data.clearedChats;
-        console.table(chats)
-        if (chats) {
-				// await producer.send({
-				// 	topic: 'chats',
-				// 	messages: [
-				// 		{
-				// 			value: JSON.stringify({ event: 'NEW_CHAT_MESSAGE', data: chat })
-				// 		}
-				// 	]
-				// });
-        // // await producer.send({
-        // //   topic: 'customers',
-        // //   messages: [
-        // //     {
-        // //       value: JSON.stringify({ event: 'SENDER_ID', data: {senderId: senderId, receiverId: receiverId}})
-        // //     }
-        // //   ]
-        // // });
-				return chats? chats : null;
-			}
-			
-		} catch (error) {
-			console.error(error instanceof Error? error.message: error)
-			
-		}
-	  }	
-	},
 
-  createGroupChat: {
-	  type: CreateGroupChatType,
-	  args: {
-		senderId: { type: GraphQLString },
-		groupId: { type: GraphQLString },
-		groupMessage: { type: GraphQLString }
-	  },
-	  resolve: async(_: any, {senderId, groupId, groupMessage}, {req} ) => {
-		try {
-			if (!senderId || !groupId) {
-				throw Error('Please provide senderId and groupIds')
-			}
+          // console.log("isRead", isRead);
+          console.table({ chatId, status });
 
-			const response = await axios.post(
-				`http://backend:5467/chat/groupChat`,
-				{
-					senderId,
-					groupId,
-					groupMessage,
-				},
-				{
-					withCredentials: true, 
-					headers: {
-						Cookie: req.headers.cookie
-					}
-				}
-			);
-			const chat = response.data.newGroupMessage;
-			if (chat) {
-				await producer.send({
-					topic: 'chats',
-					messages: [
-						{
-							value: JSON.stringify({ event: 'NEW_GROUP_CHAT_MESSAGE', data: chat })
-						}
-					]
-				});
-        // await producer.send({
-        //   topic: 'customers',
-        //   messages: [
-        //     {
-        //       value: JSON.stringify({ event: 'SENDER_ID', data: {senderId: senderId, receiverId: receiverId}})
-        //     }
-        //   ]
-        // });
-				return chat? chat : null;
-			}
-			
-		} catch (error) {
-			console.error(error instanceof Error? error.message: error)
-			
-		}
-	  }	
-	},
-
-	createChat: {
-	  type: ChatType,
-	  args: {
-		senderId: { type: GraphQLString },
-		receiverId: { type: GraphQLString },
-		chatMessage: { type: GraphQLString },
-		imageUrl: { type: GraphQLString },
-		isRead: { type: GraphQLBoolean },
-	  },
-	  resolve: async(_: any, {senderId, receiverId, isRead, chatMessage, imageUrl}, {req} ) => {
-		try {
-			if (!senderId || !receiverId) {
-				throw Error('Please provide senderId and receiverIds')
-			}
-
-      console.log("isRead", isRead);
-      console.table({senderId, receiverId});
-
-			const response = await axios.post(
-				`http://backend:5467/chat`,
-				{
-					senderId,
-					receiverId,
-					chatMessage,
-					isRead,
-					imageUrl
-				},
-				{
-					withCredentials: true, 
-					headers: {
-						Cookie: req.headers.cookie
-					}
-				}
-			);
-			const chat = response.data.newChat;
-			if (chat) {
-				await producer.send({
-					topic: 'chats',
-					messages: [
-						{
-							value: JSON.stringify({ event: 'NEW_CHAT_MESSAGE', data: chat })
-						}
-					]
-				});
-        await producer.send({
-          topic: 'customers',
-          messages: [
+          const response = await axios.put(
+            `http://backend:5467/chat`,
             {
-              value: JSON.stringify({ event: 'SENDER_ID', data: {senderId: senderId, receiverId: receiverId}})
+              chatId,
+              status
+            },
+            {
+              withCredentials: true,
+              headers: {
+                Cookie: req.headers.cookie
+              }
             }
-          ]
-        });
-				return chat? chat : null;
-			}
-			
-		} catch (error) {
-			console.error(error instanceof Error? error.message: error)
-			
-		}
-	  }	
-	},
+          );
+          const chat = response.data.updatedChat;
+          console.table(chat)
+          if (chat) {
+            // await producer.send({
+            // 	topic: 'chats',
+            // 	messages: [
+            // 		{
+            // 			value: JSON.stringify({ event: 'NEW_CHAT_MESSAGE', data: chat })
+            // 		}
+            // 	]
+            // });
+            // // await producer.send({
+            // //   topic: 'customers',
+            // //   messages: [
+            // //     {
+            // //       value: JSON.stringify({ event: 'SENDER_ID', data: {senderId: senderId, receiverId: receiverId}})
+            // //     }
+            // //   ]
+            // // });
+            return chat ? chat : null;
+          }
+
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error)
+
+        }
+      }
+    },
+
+    clearUnreadChats: {
+      type: new GraphQLList(ChatType),
+      args: {
+        senderId: { type: GraphQLString },
+        receiverId: { type: GraphQLString },
+      },
+      resolve: async (_: any, { senderId, receiverId }, { req }) => {
+        try {
+          if (!senderId || !receiverId) {
+            throw Error('Please provide senderId and receiverIds')
+          }
+          console.table({ senderId, receiverId });
+
+          const response = await axios.post(
+            `http://backend:5467/chat/clearUnreadMsgs`,
+            {
+              senderId,
+              receiverId
+            },
+            {
+              withCredentials: true,
+              headers: {
+                Cookie: req.headers.cookie
+              }
+            }
+          );
+          const chats = response.data.clearedChats;
+          console.table(chats)
+          if (chats) {
+            // await producer.send({
+            // 	topic: 'chats',
+            // 	messages: [
+            // 		{
+            // 			value: JSON.stringify({ event: 'NEW_CHAT_MESSAGE', data: chat })
+            // 		}
+            // 	]
+            // });
+            // // await producer.send({
+            // //   topic: 'customers',
+            // //   messages: [
+            // //     {
+            // //       value: JSON.stringify({ event: 'SENDER_ID', data: {senderId: senderId, receiverId: receiverId}})
+            // //     }
+            // //   ]
+            // // });
+            return chats ? chats : null;
+          }
+
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error)
+
+        }
+      }
+    },
+
+    createGroupChat: {
+      type: CreateGroupChatType,
+      args: {
+        senderId: { type: GraphQLString },
+        groupId: { type: GraphQLString },
+        groupMessage: { type: GraphQLString }
+      },
+      resolve: async (_: any, { senderId, groupId, groupMessage }, { req }) => {
+        try {
+          if (!senderId || !groupId) {
+            throw Error('Please provide senderId and groupIds')
+          }
+
+          const response = await axios.post(
+            `http://backend:5467/chat/groupChat`,
+            {
+              senderId,
+              groupId,
+              groupMessage,
+            },
+            {
+              withCredentials: true,
+              headers: {
+                Cookie: req.headers.cookie
+              }
+            }
+          );
+          const chat = response.data.newGroupMessage;
+          if (chat) {
+            await producer.send({
+              topic: 'chats',
+              messages: [
+                {
+                  value: JSON.stringify({ event: 'NEW_GROUP_CHAT_MESSAGE', data: chat })
+                }
+              ]
+            });
+            // await producer.send({
+            //   topic: 'customers',
+            //   messages: [
+            //     {
+            //       value: JSON.stringify({ event: 'SENDER_ID', data: {senderId: senderId, receiverId: receiverId}})
+            //     }
+            //   ]
+            // });
+            return chat ? chat : null;
+          }
+
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error)
+
+        }
+      }
+    },
+
+    createChat: {
+      type: ChatType,
+      args: {
+        senderId: { type: GraphQLString },
+        receiverId: { type: GraphQLString },
+        chatMessage: { type: GraphQLString },
+        imageUrl: { type: GraphQLString },
+        videoUrl: { type: GraphQLString },
+        isRead: { type: GraphQLBoolean },
+      },
+      resolve: async (_: any, { senderId, receiverId, isRead, chatMessage, imageUrl, videoUrl }, { req }) => {
+        try {
+          if (!senderId || !receiverId) {
+            throw Error('Please provide senderId and receiverIds')
+          }
+
+          console.log("isRead", isRead);
+          console.table({ senderId, receiverId });
+
+          const response = await axios.post(
+            `http://backend:5467/chat`,
+            {
+              senderId,
+              receiverId,
+              chatMessage,
+              isRead,
+              imageUrl,
+              videoUrl
+            },
+            {
+              withCredentials: true,
+              headers: {
+                Cookie: req.headers.cookie
+              }
+            }
+          );
+          const chat = response.data.newChat;
+          if (chat) {
+            await producer.send({
+              topic: 'chats',
+              messages: [
+                {
+                  value: JSON.stringify({ event: 'NEW_CHAT_MESSAGE', data: chat })
+                }
+              ]
+            });
+            await producer.send({
+              topic: 'customers',
+              messages: [
+                {
+                  value: JSON.stringify({ event: 'SENDER_ID', data: { senderId: senderId, receiverId: receiverId } })
+                }
+              ]
+            });
+            return chat ? chat : null;
+          }
+
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error)
+
+        }
+      }
+    },
     createProduct: {
       type: CreateProductType,
       args: {
@@ -798,7 +800,7 @@ export const MutationType = new GraphQLObjectType({
             throw Error('Please provide sufficient details for task creation');
           }
 
-          console.table({id, email, amount, authCode });
+          console.table({ id, email, amount, authCode });
 
           const response = await axios.post(
             `http://localhost:3980/api/paystack/initialize`,
@@ -925,7 +927,7 @@ export const MutationType = new GraphQLObjectType({
               Cookie: req.headers.cookie
             }
           });
-          return {success: true};
+          return { success: true };
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : error;
           console.error(errorMsg);
@@ -1117,7 +1119,7 @@ export const SubscriptionType = new GraphQLObjectType({
       resolve: (payload) => payload.sendTypingNotifications
     },
 
-	newChatMessageSubscription: {
+    newChatMessageSubscription: {
       type: ChatType,
 
       subscribe: async function* (parent, args, content) {
@@ -1309,10 +1311,10 @@ const schema = new GraphQLSchema({
     CategoryType,
     ProducerType,
     CreateProductType,
-	  ChatType,
+    ChatType,
     CreateDetailsType,
-	  CreateChatType,
-	  CreateGroupChatType,
+    CreateChatType,
+    CreateGroupChatType,
     UserDetailsType,
     CursorType,
     PaymentCursorType,
