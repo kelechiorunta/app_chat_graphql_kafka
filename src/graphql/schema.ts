@@ -656,9 +656,10 @@ export const MutationType = new GraphQLObjectType({
         chatMessage: { type: GraphQLString },
         imageUrl: { type: GraphQLString },
         videoUrl: { type: GraphQLString },
+        audioUrl: { type: GraphQLString },
         isRead: { type: GraphQLBoolean },
       },
-      resolve: async (_: any, { senderId, receiverId, isRead, chatMessage, imageUrl, videoUrl }, { req }) => {
+      resolve: async (_: any, { senderId, receiverId, isRead, chatMessage, imageUrl, videoUrl, audioUrl }, { req }) => {
         try {
           if (!senderId || !receiverId) {
             throw Error('Please provide senderId and receiverIds')
@@ -675,7 +676,8 @@ export const MutationType = new GraphQLObjectType({
               chatMessage,
               isRead,
               imageUrl,
-              videoUrl
+              videoUrl,
+              audioUrl
             },
             {
               withCredentials: true,
